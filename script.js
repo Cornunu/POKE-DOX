@@ -1,123 +1,88 @@
-const pokeContainer = document.getElementById("pokemon-container");
-const notification = document.getElementById("notification");
-const alertaCentral = document.getElementById("alerta-central");
-const searchInput = document.getElementById("search");
-const searchBtn = document.getElementById("searchBtn");
-const langSelect = document.getElementById("langSelect");
-const layoutSelect = document.getElementById("layoutSelect");
-const pokedexBtn = document.getElementById("pokedexBtn"); // botão de ir para a Pokedex
-const welcomeSound = new Audio("WELCOME.ogg"); // som de boas-vindas
-
-let language = navigator.language.startsWith("pt") ? "pt" : "en"; // idioma padrão detectado
-let layout = "normal";
-
-langSelect.value = "auto";
-layoutSelect.value = "normal";
-
-langSelect.addEventListener("change", () => {
-  if (langSelect.value === "auto") {
-    language = navigator.language.startsWith("pt") ? "pt" : "en";
-  } else {
-    language = langSelect.value;
+// Dados básicos para teste
+const pokemonData = {
+  1: {
+    name: "Bulbasaur",
+    type: ["Grass", "Poison"],
+    evolutions: ["Ivysaur", "Venusaur"],
+    description: "A strange seed was planted on its back at birth. The plant sprouts and grows with this Pokémon.",
+    region: "Kanto",
+    generation: 1,
+    img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png"
+  },
+  2: {
+    name: "Ivysaur",
+    type: ["Grass", "Poison"],
+    evolutions: ["Venusaur"],
+    description: "When the bulb on its back grows large, it appears to lose the ability to stand on its hind legs.",
+    region: "Kanto",
+    generation: 1,
+    img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/2.png"
   }
-});
+};
 
-layoutSelect.addEventListener("change", () => {
-  layout = layoutSelect.value;
-  pokeContainer.className = layout; // aplica classe para grid layout
-});
+// Mostrar Pokémon do Dia
+function getPokemonOfDay() {
+  const keys = Object.keys(pokemonData);
+  const index = new Date().getDate() % keys.length;
+  return pokemonData[keys[index]];
+}
 
-searchBtn.addEventListener("click", buscarPokemon);
+function showPokemonOfDay() {
+  const poke = getPokemonOfDay();
+  const box = document.getElementById("pokeDayBox");
+  box.innerHTML = `
+    <h3>${poke.name}</h3>
+    <img src="${poke.img}" alt="${poke.name}" />
+    <p>${poke.description}</p>
+  `;
+}
 
-searchInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") buscarPokemon();
-});
-
-pokedexBtn.addEventListener("click", () => {
-  showNotification(`${language === "pt" ? "Bem-vindo à Pokédex!" : "Welcome to the Pokédex!"}`);
-  welcomeSound.play();
-  setTimeout(() => {
-    window.location.href = "https://cornunu.github.io/POKE-DOX/";
-  }, 1000);
-});
-
-async function buscarPokemon() {
-  const query = searchInput.value.toLowerCase().trim();
-  pokeContainer.innerHTML = "";
-  alertaCentral.style.display = "none";
-
-  if (!query) {
-    showAlertaCentral(language === "pt" ? "⚠️ Pokémon aleatório selecionado!" : "⚠️ Random Pokémon selected!");
-    return;
-  }
-
-  try {
-    const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${query}`);
-    if (!response.ok) throw new Error("Pokémon não encontrado");
-
-    const pokemon = await response.json();
-    const speciesResp = await fetch(pokemon.species.url);
-    const species = await speciesResp.json();
-
-    // Descrição no idioma escolhido ou fallback
-    let descriptionObj = species.flavor_text_entries.find(entry => entry.language.name === language);
-    if (!descriptionObj) {
-      descriptionObj = species.flavor_text_entries.find(entry => entry.language.name === "en");
-    }
-    const description = descriptionObj ? descriptionObj.flavor_text.replace(/\f|\n/g, " ") : (language === "pt" ? "Sem descrição." : "No description.");
-
-    // Tipos
-    const types = pokemon.types.map(t => t.type.name);
-
-    // Stats formatados
-    const statsFormatted = pokemon.stats.map(stat => `${stat.stat.name.toUpperCase()}: ${stat.base_stat}`).join(" | ");
-
-    // Imagens conforme layout
-    let imageNormal, imageShiny;
-    if (layout === "normal") {
-      imageNormal = pokemon.sprites.other["official-artwork"].front_default;
-      imageShiny = pokemon.sprites.other["official-artwork"].front_shiny;
-    } else {
-      imageNormal = pokemon.sprites.front_default;
-      imageShiny = pokemon.sprites.front_shiny;
-    }
-
-    pokeContainer.innerHTML = `
-      <article class="pokemon-card">
-        <h2><img src="sr2a947c8f967b8.png" alt="Pokébola" /> ${capitalize(pokemon.name)} <span>#${pokemon.id.toString().padStart(3,"0")}</span></h2>
-        <div class="pokemon-info">
-          <div class="type-list types">
-            ${types.map(t => `<span>${t}</span>`).join("")}
-          </div>
-          <div class="stats">${statsFormatted}</div>
-          <p><strong>${language === "pt" ? "Descrição" : "Description"}:</strong> ${description}</p>
-        </div>
-        <div class="sprite-container">
-          <img src="${imageNormal}" alt="Normal" class="${layout === "normal" ? "normal-art" : "pixel-art"}" />
-          <span>🔄</span>
-          <img src="${imageShiny}" alt="Shiny" class="${layout === "normal" ? "normal-art" : "pixel-art"}" />
-        </div>
-      </article>
+// Montar grid
+function renderAllPokemons() {
+  const grid = document.getElementById("pokemonGrid");
+  grid.innerHTML = "";
+  Object.entries(pokemonData).forEach(([id, poke]) => {
+    const tile = document.createElement("div");
+    tile.className = "pokemon-tile";
+    tile.innerHTML = `
+      <img src="${poke.img}" alt="${poke.name}" />
+      <p>#${id.padStart?.(3, "0") || id} - ${poke.name}</p>
     `;
-
-    showNotification(`${capitalize(pokemon.name)} #${pokemon.id.toString().padStart(3,"0")} ${language === "pt" ? "encontrado!" : "found!"}`);
-  } catch {
-    showAlertaCentral(language === "pt" ? "❌ Pokémon não encontrado!" : "❌ Pokémon not found!");
-  }
+    tile.onclick = () => showDetails(id);
+    grid.appendChild(tile);
+  });
 }
 
-function showNotification(message) {
-  notification.innerHTML = `<img src="sr2a947c8f967b8.png" alt="Pokébola" /> ${message}`;
-  notification.classList.add("show");
-  setTimeout(() => notification.classList.remove("show"), 4000);
+// Mostrar detalhes
+function showDetails(id) {
+  const poke = pokemonData[id];
+  const section = document.getElementById("pokemonDetails");
+  section.style.display = "block";
+  section.innerHTML = `
+    <h2>${poke.name}</h2>
+    <img src="${poke.img}" />
+    <p><strong>Tipos:</strong> ${poke.type.join(", ")}</p>
+    <p><strong>Evoluções:</strong> ${poke.evolutions.join(" ➝ ")}</p>
+    <p><strong>Descrição:</strong> ${poke.description}</p>
+    <p><strong>Região:</strong> ${poke.region}</p>
+    <p><strong>Geração:</strong> ${poke.generation}</p>
+  `;
+
+  // Esconder lista principal
+  document.getElementById("pokedex").style.display = "none";
 }
 
-function showAlertaCentral(message) {
-  alertaCentral.textContent = message;
-  alertaCentral.style.display = "block";
-  setTimeout(() => alertaCentral.style.display = "none", 3500);
-}
+// Pesquisar
+document.addEventListener("DOMContentLoaded", () => {
+  showPokemonOfDay();
+  renderAllPokemons();
 
-function capitalize(text) {
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
+  const searchInput = document.getElementById("searchInput");
+  searchInput.addEventListener("input", () => {
+    const val = searchInput.value.toLowerCase();
+    const entry = Object.entries(pokemonData).find(
+      ([, poke]) => poke.name.toLowerCase() === val
+    );
+    if (entry) showDetails(entry[0]);
+  });
+});
