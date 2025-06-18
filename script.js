@@ -1,113 +1,85 @@
-const pokeContainer = document.getElementById("pokemon-container");
-const notification = document.getElementById("notification");
-const alertaCentral = document.getElementById("alerta-central");
-const searchInput = document.getElementById("search");
-const searchBtn = document.getElementById("searchBtn");
-const langSelect = document.getElementById("langSelect");
-const layoutSelect = document.getElementById("layoutSelect");
+document.addEventListener('DOMContentLoaded',()=> {
+  const popup=document.getElementById('welcomePopup');
+  setTimeout(()=>popup.remove(),2000);
 
-let language = navigator.language.startsWith("pt") ? "pt" : "en"; // idioma padrão detectado
-let layout = "normal";
+  const GRID=document.getElementById('grid'),
+        DETAIL=document.getElementById('detail'),
+        searchInput=document.getElementById('searchInput'),
+        toggleBtn=document.getElementById('toggleView');
 
-langSelect.value = "auto";
-layoutSelect.value = "normal";
+  let viewMode='normal', allPokemons=[], typesChart;
 
-langSelect.addEventListener("change", () => {
-  if (langSelect.value === "auto") {
-    language = navigator.language.startsWith("pt") ? "pt" : "en";
-  } else {
-    language = langSelect.value;
-  }
-});
+  toggleBtn.onclick=()=>{ viewMode = viewMode==='normal'?'pixel':'normal'; renderGrid(allPokemons); }
 
-layoutSelect.addEventListener("change", () => {
-  layout = layoutSelect.value;
-  pokeContainer.className = layout; // aplica classe para grid layout
-});
+  searchInput.addEventListener('keydown',e=>{
+    if(e.key==='Enter') searchPokemon(searchInput.value.trim());
+  });
 
-searchBtn.addEventListener("click", buscarPokemon);
-
-searchInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") buscarPokemon();
-});
-
-async function buscarPokemon() {
-  const query = searchInput.value.toLowerCase().trim();
-  pokeContainer.innerHTML = "";
-  alertaCentral.style.display = "none";
-
-  if (!query) {
-    showAlertaCentral(language === "pt" ? "⚠️ Pokémon aleatório selecionado!" : "⚠️ Random Pokémon selected!");
-    return;
-  }
-
-  try {
-    const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${query}`);
-    if (!response.ok) throw new Error("Pokémon não encontrado");
-
-    const pokemon = await response.json();
-    const speciesResp = await fetch(pokemon.species.url);
-    const species = await speciesResp.json();
-
-    // Descrição no idioma escolhido ou fallback
-    let descriptionObj = species.flavor_text_entries.find(entry => entry.language.name === language);
-    if (!descriptionObj) {
-      descriptionObj = species.flavor_text_entries.find(entry => entry.language.name === "en");
+  async function loadAll() {
+    const res=await fetch('https://pokeapi.co/api/v2/pokemon?limit=1025');
+    const list=(await res.json()).results;
+    for(const entry of list) {
+      const d=await fetch(entry.url).then(r=>r.json());
+      allPokemons.push(d);
+      if(allPokemons.length<=2) renderGrid(allPokemons);
     }
-    const description = descriptionObj ? descriptionObj.flavor_text.replace(/\f|\n/g, " ") : (language === "pt" ? "Sem descrição." : "No description.");
-
-    // Tipos
-    const types = pokemon.types.map(t => t.type.name);
-
-    // Stats formatados
-    const statsFormatted = pokemon.stats.map(stat => `${stat.stat.name.toUpperCase()}: ${stat.base_stat}`).join(" | ");
-
-    // Imagens conforme layout
-    let imageNormal, imageShiny;
-    if (layout === "normal") {
-      imageNormal = pokemon.sprites.other["official-artwork"].front_default;
-      imageShiny = pokemon.sprites.other["official-artwork"].front_shiny;
-    } else {
-      imageNormal = pokemon.sprites.front_default;
-      imageShiny = pokemon.sprites.front_shiny;
-    }
-
-    pokeContainer.innerHTML = `
-      <article class="pokemon-card">
-        <h2><img src="sr2a947c8f967b8.png" alt="Pokébola" /> ${capitalize(pokemon.name)} <span>#${pokemon.id.toString().padStart(3,"0")}</span></h2>
-        <div class="pokemon-info">
-          <div class="type-list types">
-            ${types.map(t => `<span>${t}</span>`).join("")}
-          </div>
-          <div class="stats">${statsFormatted}</div>
-          <p><strong>${language === "pt" ? "Descrição" : "Description"}:</strong> ${description}</p>
-        </div>
-        <div class="sprite-container">
-          <img src="${imageNormal}" alt="Normal" class="${layout === "normal" ? "normal-art" : "pixel-art"}" />
-          <span>🔄</span>
-          <img src="${imageShiny}" alt="Shiny" class="${layout === "normal" ? "normal-art" : "pixel-art"}" />
-        </div>
-      </article>
-    `;
-
-    showNotification(`${capitalize(pokemon.name)} #${pokemon.id.toString().padStart(3,"0")} ${language === "pt" ? "encontrado!" : "found!"}`);
-  } catch {
-    showAlertaCentral(language === "pt" ? "❌ Pokémon não encontrado!" : "❌ Pokémon not found!");
+    renderGrid(allPokemons);
   }
-}
 
-function showNotification(message) {
-  notification.innerHTML = `<img src="sr2a947c8f967b8.png" alt="Pokébola" /> ${message}`;
-  notification.classList.add("show");
-  setTimeout(() => notification.classList.remove("show"), 4000);
-}
+  async function searchPokemon(q) {
+    try {
+      const p=await fetch(`https://pokeapi.co/api/v2/pokemon/${q.toLowerCase()}`).then(r=>r.json());
+      const species=await fetch(p.species.url).then(r=>r.json());
+      const evoChain=await fetch(species.evolution_chain.url).then(r=>r.json());
+      const gen=species.generation.name;
+      const regionUrl=species.pokedex_numbers[0].pokedex.url;
+      const region=(await fetch(regionUrl).then(r=>r.json())).region.name;
+      const desc=species.flavor_text_entries.find(e=>e.language.name==='pt')?.flavor_text || species.flavor_text_entries.find(e=>e.language.name==='en').flavor_text;
 
-function showAlertaCentral(message) {
-  alertaCentral.textContent = message;
-  alertaCentral.style.display = "block";
-  setTimeout(() => alertaCentral.style.display = "none", 3500);
-}
+      const evos=[];
+      function recurse(chain){ evos.push(chain.species.name); chain.evolves_to.forEach(recurse);}
+      recurse(evoChain.chain);
 
-function capitalize(text) {
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
+      loadTypeChart();
+      const weak=typesChart[p.types[0].type.name].weak;
+
+      DETAIL.innerHTML=`
+        <button id="back">« Voltar</button>
+        <h2>#${String(p.id).padStart(3,'0')} ${p.name.toUpperCase()}</h2>
+        <img src="${viewMode==='normal'?p.sprites.other['official-artwork'].front_default:p.sprites.front_default}" class="${viewMode}"/>
+        <p><strong>Tipos:</strong> ${p.types.map(t=>t.type.name).join(', ')}</p>
+        <p><strong>Fraquezas:</strong> ${weak.join(', ')}</p>
+        <p><em>${desc.replace(/\n|\f/g,' ')}</em></p>
+        <p><strong>Geração:</strong> ${gen}, <strong>Região:</strong> ${region}</p>
+        <p><strong>Evoluções:</strong> ${evos.join(' → ')}</p>
+      `;
+      DETAIL.classList.remove('hidden'); GRID.classList.add('hidden');
+      document.getElementById('back').onclick=()=>{ DETAIL.classList.add('hidden'); GRID.classList.remove('hidden'); }
+    } catch(e){ alert('Pokémon não encontrado'); }
+  }
+
+  async function loadTypeChart() {
+    if(typesChart) return;
+    const typesRes=await fetch('https://pokeapi.co/api/v2/type').then(r=>r.json());
+    typesChart={};
+    for(const tEntry of typesRes.results) {
+      const tD=await fetch(tEntry.url).then(r=>r.json());
+      typesChart[tD.name]={weak:tD.damage_relations.double_damage_from.map(x=>x.name)};
+    }
+  }
+
+  function renderGrid(list) {
+    GRID.innerHTML='';
+    list.forEach(p=>{
+      const div=document.createElement('div');
+      div.className='card';
+      div.innerHTML=`
+        <img src="${viewMode==='normal'?p.sprites.other['official-artwork'].front_default:p.sprites.front_default}" alt="${p.name}"/>
+        <p>#${String(p.id).padStart(3,'0')} ${p.name.toUpperCase()}</p>`;
+      div.onclick=()=>searchPokemon(p.name);
+      GRID.appendChild(div);
+    });
+  }
+
+  loadAll();
+});
