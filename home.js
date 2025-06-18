@@ -1,52 +1,113 @@
-const container = document.getElementById("pokemon-dia");
+const pokeContainer = document.getElementById("pokemon-container");
+const notification = document.getElementById("notification");
+const alertaCentral = document.getElementById("alerta-central");
+const searchInput = document.getElementById("search");
+const searchBtn = document.getElementById("searchBtn");
+const langSelect = document.getElementById("langSelect");
+const layoutSelect = document.getElementById("layoutSelect");
 
-function getTodayKey() {
-  const now = new Date();
-  return `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
-}
+let language = navigator.language.startsWith("pt") ? "pt" : "en"; // idioma padrão detectado
+let layout = "normal";
 
-function savePokemonDia(pokemon) {
-  const key = getTodayKey();
-  localStorage.setItem("pokemon_dia_data", JSON.stringify({ key, pokemon }));
-}
+langSelect.value = "auto";
+layoutSelect.value = "normal";
 
-function getSavedPokemonDia() {
-  const data = JSON.parse(localStorage.getItem("pokemon_dia_data"));
-  if (!data) return null;
-  return data.key === getTodayKey() ? data.pokemon : null;
-}
+langSelect.addEventListener("change", () => {
+  if (langSelect.value === "auto") {
+    language = navigator.language.startsWith("pt") ? "pt" : "en";
+  } else {
+    language = langSelect.value;
+  }
+});
 
-function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
+layoutSelect.addEventListener("change", () => {
+  layout = layoutSelect.value;
+  pokeContainer.className = layout; // aplica classe para grid layout
+});
 
-async function loadPokemonDia() {
-  const saved = getSavedPokemonDia();
-  if (saved) {
-    mostrarPokemon(saved);
+searchBtn.addEventListener("click", buscarPokemon);
+
+searchInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") buscarPokemon();
+});
+
+async function buscarPokemon() {
+  const query = searchInput.value.toLowerCase().trim();
+  pokeContainer.innerHTML = "";
+  alertaCentral.style.display = "none";
+
+  if (!query) {
+    showAlertaCentral(language === "pt" ? "⚠️ Pokémon aleatório selecionado!" : "⚠️ Random Pokémon selected!");
     return;
   }
 
-  const randomId = Math.floor(Math.random() * 898) + 1; // até Gen 8
-  const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${randomId}`);
-  const data = await res.json();
+  try {
+    const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${query}`);
+    if (!response.ok) throw new Error("Pokémon não encontrado");
 
-  const pokemon = {
-    id: data.id,
-    name: capitalize(data.name),
-    image: data.sprites.other["official-artwork"].front_default,
-  };
+    const pokemon = await response.json();
+    const speciesResp = await fetch(pokemon.species.url);
+    const species = await speciesResp.json();
 
-  savePokemonDia(pokemon);
-  mostrarPokemon(pokemon);
+    // Descrição no idioma escolhido ou fallback
+    let descriptionObj = species.flavor_text_entries.find(entry => entry.language.name === language);
+    if (!descriptionObj) {
+      descriptionObj = species.flavor_text_entries.find(entry => entry.language.name === "en");
+    }
+    const description = descriptionObj ? descriptionObj.flavor_text.replace(/\f|\n/g, " ") : (language === "pt" ? "Sem descrição." : "No description.");
+
+    // Tipos
+    const types = pokemon.types.map(t => t.type.name);
+
+    // Stats formatados
+    const statsFormatted = pokemon.stats.map(stat => `${stat.stat.name.toUpperCase()}: ${stat.base_stat}`).join(" | ");
+
+    // Imagens conforme layout
+    let imageNormal, imageShiny;
+    if (layout === "normal") {
+      imageNormal = pokemon.sprites.other["official-artwork"].front_default;
+      imageShiny = pokemon.sprites.other["official-artwork"].front_shiny;
+    } else {
+      imageNormal = pokemon.sprites.front_default;
+      imageShiny = pokemon.sprites.front_shiny;
+    }
+
+    pokeContainer.innerHTML = `
+      <article class="pokemon-card">
+        <h2><img src="sr2a947c8f967b8.png" alt="Pokébola" /> ${capitalize(pokemon.name)} <span>#${pokemon.id.toString().padStart(3,"0")}</span></h2>
+        <div class="pokemon-info">
+          <div class="type-list types">
+            ${types.map(t => `<span>${t}</span>`).join("")}
+          </div>
+          <div class="stats">${statsFormatted}</div>
+          <p><strong>${language === "pt" ? "Descrição" : "Description"}:</strong> ${description}</p>
+        </div>
+        <div class="sprite-container">
+          <img src="${imageNormal}" alt="Normal" class="${layout === "normal" ? "normal-art" : "pixel-art"}" />
+          <span>🔄</span>
+          <img src="${imageShiny}" alt="Shiny" class="${layout === "normal" ? "normal-art" : "pixel-art"}" />
+        </div>
+      </article>
+    `;
+
+    showNotification(`${capitalize(pokemon.name)} #${pokemon.id.toString().padStart(3,"0")} ${language === "pt" ? "encontrado!" : "found!"}`);
+  } catch {
+    showAlertaCentral(language === "pt" ? "❌ Pokémon não encontrado!" : "❌ Pokémon not found!");
+  }
 }
 
-function mostrarPokemon(pokemon) {
-  container.innerHTML = `
-    <h2>Pokémon do Dia</h2>
-    <img src="${pokemon.image}" alt="${pokemon.name}" />
-    <h3>${pokemon.name} <span>#${pokemon.id.toString().padStart(3, "0")}</span></h3>
-  `;
+function showNotification(message) {
+  notification.innerHTML = `<img src="sr2a947c8f967b8.png" alt="Pokébola" /> ${message}`;
+  notification.classList.add("show");
+  setTimeout(() => notification.classList.remove("show"), 4000);
 }
 
-loadPokemonDia();
+function showAlertaCentral(message) {
+  alertaCentral.textContent = message;
+  alertaCentral.style.display = "block";
+  setTimeout(() => alertaCentral.style.display = "none", 3500);
+}
+
+function capitalize(text) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
