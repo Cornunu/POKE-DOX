@@ -2,27 +2,28 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>POKE-DOX</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POKE NANDOX - Home</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>
+  <div class="home-container">
+    <h1 class="home-title">
       <img src="sr2a947c8f967b8.png" alt="Pokébola" class="poke-icon shake" />
-      POKE-DOX
+      POKE NANDOX
     </h1>
-    <input type="text" id="search" placeholder="Pesquise um Pokémon..." />
-    <select id="spriteStyle">
-      <option value="official-artwork">Arte oficial</option>
-      <option value="pixel">Pixel</option>
-    </select>
-  </header>
 
-  <main id="pokedex"></main>
+    <p class="creditos">Criado por: <strong>NandoX</strong></p>
 
-  <div id="notification" class="hidden"></div>
+    <div class="pokemon-dia-card" id="pokemon-dia">
+      <p class="carregando">Carregando Pokémon do dia...</p>
+    </div>
 
-  <script src="script.js"></script>
+    <button class="btn-acessar" onclick="window.location.href='pokedex.html'">
+      Acessar Pokédex
+    </button>
+  </div>
+
+  <script src="home.js"></script>
 </body>
 </html>
