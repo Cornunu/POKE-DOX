@@ -1,28 +1,33 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>POKE NANDOX - Pokédex</title>
-  <link rel="stylesheet" href="style.css"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POKE NANDOX</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="welcomePopup" class="popup"><h2>🎉 Bem-vindo(a) à Pokédex!</h2></div>
-
   <header>
-    <h1>POKE NANDOX</h1>
-    <div class="controls">
-      <input id="searchInput" placeholder="Pesquisar nome ou número..."/>
-      <button id="toggleView">Pixel / Normal</button>
-    </div>
+    <h1>
+      <img src="sr2a947c8f967b8.png" class="poke-icon shake" alt="Pokébola" />
+      POKE NANDOX
+    </h1>
+    <button onclick="window.location.href='https://cornunu.github.io/POKE-DOX/'">Ir para a Pokédex</button>
   </header>
 
-  <main>
-    <section id="grid" class="grid"></section>
-    <section id="detail" class="detail hidden"></section>
-  </main>
+  <section id="pokeDaySection" class="poke-day">
+    <h2>Pokémon do Dia</h2>
+    <div id="pokeDayBox" class="poke-card">Carregando...</div>
+  </section>
 
-  <script src="pokedex.js"></script>
+  <section id="pokedex">
+    <h2>Todos os Pokémons</h2>
+    <input type="text" id="searchInput" placeholder="Pesquisar Pokémon..." />
+    <div id="pokemonGrid" class="grid"></div>
+  </section>
+
+  <section id="pokemonDetails" style="display: none;"></section>
+
+  <script src="script.js"></script>
 </body>
 </html>
