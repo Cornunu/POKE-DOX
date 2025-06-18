@@ -1,0 +1,67 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #111;
+  color: white;
+  text-align: center;
+}
+
+header {
+  background-color: #222;
+  padding: 10px;
+}
+
+.poke-icon {
+  width: 32px;
+  vertical-align: middle;
+}
+
+.poke-day {
+  margin: 20px;
+}
+
+.poke-card {
+  background-color: #222;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 10px auto;
+  max-width: 300px;
+  box-shadow: 0 0 10px #000;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+/* POP-UP central */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.popup-content {
+  background: #222;
+  padding: 30px 40px;
+  border-radius: 15px;
+  box-shadow: 0 0 20px #000;
+  text-align: center;
+}
+
+.popup-icon {
+  width: 40px;
+  margin-bottom: 10px;
+}
