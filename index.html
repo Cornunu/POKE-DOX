@@ -1,50 +1,28 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>POKE NANDOX</title>
-<link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>POKE NANDOX - Pokédex</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
+  <div id="welcomePopup" class="popup"><h2>🎉 Bem-vindo(a) à Pokédex!</h2></div>
 
-<header>
-  <h1>
-    <img src="sr2a947c8f967b8.png" alt="Pokébola" class="poke-icon shake" />
-    POKE NANDOX
-  </h1>
-
-  <div class="controls">
-    <div>
-      <label for="langSelect">Idioma:</label>
-      <select id="langSelect">
-        <option value="auto" selected>Auto</option>
-        <option value="pt">Português (BR)</option>
-        <option value="en">English</option>
-      </select>
+  <header>
+    <h1>POKE NANDOX</h1>
+    <div class="controls">
+      <input id="searchInput" placeholder="Pesquisar nome ou número..."/>
+      <button id="toggleView">Pixel / Normal</button>
     </div>
+  </header>
 
-    <div>
-      <label for="layoutSelect">Layout:</label>
-      <select id="layoutSelect">
-        <option value="normal" selected>Normal</option>
-        <option value="pixel">Pixel</option>
-      </select>
-    </div>
+  <main>
+    <section id="grid" class="grid"></section>
+    <section id="detail" class="detail hidden"></section>
+  </main>
 
-    <input type="text" id="search" placeholder="Digite nome ou número..." autocomplete="off" />
-    <button id="searchBtn">Buscar</button>
-  </div>
-</header>
-
-<!-- Notificação canto superior direita -->
-<div id="notification" class="notify"></div>
-
-<!-- Alerta central -->
-<div id="alerta-central" class="alerta-central"></div>
-
-<main id="pokemon-container" class="normal"></main>
-
-<script src="script.js"></script>
+  <script src="pokedex.js"></script>
 </body>
 </html>
