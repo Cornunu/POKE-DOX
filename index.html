@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POKE NANDOX</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>
+      <img src="sr2a947c8f967b8.png" alt="Pokébola" class="poke-icon shake" />
+      POKE NANDOX
+    </h1>
+
+    <div class="controls">
+      <div>
+        <label for="langSelect">Idioma:</label>
+        <select id="langSelect">
+          <option value="auto" selected>Auto</option>
+          <option value="pt">Português (BR)</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="layoutSelect">Layout:</label>
+        <select id="layoutSelect">
+          <option value="normal" selected>Normal</option>
+          <option value="pixel">Pixel</option>
+        </select>
+      </div>
+
+      <input type="text" id="search" placeholder="Digite nome ou número..." autocomplete="off" />
+      <button id="searchBtn">Buscar</button>
+    </div>
+  </header>
+
+  <div id="notification" class="notify"></div>
+  <div id="alerta-central" class="alerta-central"></div>
+
+  <main id="pokemon-container" class="normal"></main>
+
+  <script src="script.js"></script>
+</body>
+</html>
